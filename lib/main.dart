@@ -1,14 +1,22 @@
 import 'package:flutter/material.dart';
+import 'package:ai_chat_bot/features/chat_feature/presentation/views/chat_view.dart';
 
 void main() {
-  runApp(const MyApp());
+  runApp(const AiChatBot());
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+class AiChatBot extends StatelessWidget {
+  const AiChatBot({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp();
+    return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      theme: ThemeData.dark().copyWith(
+        scaffoldBackgroundColor: const Color(0xFF1A1B23),
+        primaryColor: const Color(0xFF10A37F),
+      ),
+      home: const ChatView(),
+    );
   }
 }
