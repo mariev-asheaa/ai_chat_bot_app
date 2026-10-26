@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:ai_chat_bot/features/chat_feature/data/models/chat_message_model.dart';
 import 'package:ai_chat_bot/features/chat_feature/data/models/chat_message_response_model.dart';
+import 'package:ai_chat_bot/features/chat_feature/domain/entities/ui_chat_message.dart';
 import 'package:ai_chat_bot/features/chat_feature/domain/repo/send_message_repository.dart';
 
 part 'send_message_state.dart';
@@ -11,29 +12,70 @@ class SendMessageCubit extends Cubit<SendMessageState> {
 
   SendMessageCubit({required this.repository}) : super(SendMessageInitial());
 
-  Future<void> sendMessage(ChatMessageModel message) async {
+  final List<UiChatMessage> _messages = [];
+
+  List<UiChatMessage> get messages => List.unmodifiable(_messages);
+
+  Future<void> sendMessage(String text) async {
+    final trimmedText = text.trim();
+    if (trimmedText.isEmpty) return;
+
+    final userMessageId = DateTime.now().millisecondsSinceEpoch.toString();
+    final botMessageId = '${userMessageId}_bot';
+
+    final userMsg = UiChatMessage(
+      id: userMessageId,
+      text: trimmedText,
+      sender: MessageSender.user,
+      timestamp: DateTime.now(),
+    );
+
+    final loadingBotMsg = UiChatMessage(
+      id: botMessageId,
+      text: '',
+      sender: MessageSender.bot,
+      timestamp: DateTime.now(),
+      isLoading: true,
+    );
+
+    _messages.add(userMsg);
+    _messages.add(loadingBotMsg);
+
     emit(SendMessageLoading());
-    try {
-      final response = await repository.sendMessage(message);
-      response.fold(
-        (failure) => emit(SendMessageError(message: failure.errMessage)),
-        (response) => emit(SendMessageSuccess(response: response)),
-      );
-    } catch (e) {
-      emit(SendMessageError(message: e.toString()));
-    }
+
+    final result = await repository.sendMessage(
+      ChatMessageModel(input: trimmedText),
+    );
+
+    result.fold(
+      (failure) {
+        final index = _messages.indexWhere((m) => m.id == botMessageId);
+        if (index != -1) {
+          _messages[index] = _messages[index].copyWith(
+            text: 'Error: ${failure.errMessage}',
+            isLoading: false,
+          );
+        }
+        emit(SendMessageError(message: failure.errMessage));
+      },
+      (response) {
+        final index = _messages.indexWhere((m) => m.id == botMessageId);
+        final responseText =
+            response.outputText ?? 'No response content available.';
+        if (index != -1) {
+          _messages[index] = _messages[index].copyWith(
+            text: responseText,
+            isLoading: false,
+          );
+        }
+        emit(SendMessageSuccess(response: response));
+      },
+    );
   }
 
-  Future<void> sendInput(
-    String input, {
-    String? previousInteractionId,
-    String model = 'gemini-3.6-flash',
-  }) async {
-    final message = ChatMessageModel(
-      input: input,
-      previousInteractionId: previousInteractionId,
-      model: model,
-    );
-    await sendMessage(message);
+  void resetConversation() {
+    _messages.clear();
+    repository.resetConversation();
+    emit(SendMessageInitial());
   }
 }
