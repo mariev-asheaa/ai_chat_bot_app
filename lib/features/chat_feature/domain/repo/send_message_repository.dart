@@ -7,5 +7,6 @@ abstract class SendMessageRepository {
   Future<Either<Failure, ChatMessageResponseModel>> sendMessage(
     ChatMessageModel message,
   );
+  void resetConversation();
 }
 

@@ -11,17 +11,54 @@ class SendMessageRepositoryImpl implements SendMessageRepository {
 
   SendMessageRepositoryImpl({required this.chatService});
 
+  static const int _maxHistory = 20;
+  static const int _keepLast = 5;
+
+  final List<String> _history = [];
+  String? _previousInteractionId;
+
+  @override
+  void resetConversation() {
+    _history.clear();
+    _previousInteractionId = null;
+  }
+
   @override
   Future<Either<Failure, ChatMessageResponseModel>> sendMessage(
-    ChatMessageModel message,
-  ) async {
+      ChatMessageModel message,
+      ) async {
     try {
-      final result = await chatService.sendMessage(message);
-      return Right<Failure, ChatMessageResponseModel>(result);
+      var input = message.input;
+      var prevId = _previousInteractionId;
+
+      if (_history.length > _maxHistory) {
+        final last = _history.sublist(_history.length - _keepLast);
+        _history..clear()..addAll(last);
+
+        prevId = null;
+        input =
+        'Previous conversation:\n${last.join('\n')}\n\nUser: ${message.input}';
+      }
+
+      final result = await chatService.sendMessage(
+        ChatMessageModel(
+          model: message.model,
+          input: input,
+          previousInteractionId: prevId,
+          generationConfig: message.generationConfig,
+        ),
+      );
+
+      _previousInteractionId = result.id;
+      _history
+        ..add('User: ${message.input}')
+        ..add('Bot: ${result.outputText ?? ''}');
+
+      return Right(result);
     } on DioException catch (e) {
-      return Left<Failure, ChatMessageResponseModel>(ServerFailure.fromDioError(e));
+      return Left(ServerFailure.fromDioError(e));
     } catch (e) {
-      return Left<Failure, ChatMessageResponseModel>(ServerFailure(e.toString()));
+      return Left(ServerFailure(e.toString()));
     }
   }
 }
