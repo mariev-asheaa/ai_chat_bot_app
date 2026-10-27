@@ -4,55 +4,37 @@ import 'package:ai_chat_bot/core/errors/failure.dart';
 import 'package:ai_chat_bot/core/services/chat_service.dart';
 import 'package:ai_chat_bot/features/chat_feature/data/models/chat_message_model.dart';
 import 'package:ai_chat_bot/features/chat_feature/data/models/chat_message_response_model.dart';
+import 'package:ai_chat_bot/features/chat_feature/data/repo/chat_history_manager.dart';
 import 'package:ai_chat_bot/features/chat_feature/domain/repo/send_message_repository.dart';
 
 class SendMessageRepositoryImpl implements SendMessageRepository {
   final ChatService chatService;
+  final ChatHistoryManager historyManager;
 
-  SendMessageRepositoryImpl({required this.chatService});
-
-  static const int _maxHistory = 20;
-  static const int _keepLast = 5;
-
-  final List<String> _history = [];
-  String? _previousInteractionId;
+  SendMessageRepositoryImpl({
+    required this.chatService,
+    ChatHistoryManager? historyManager,
+  }) : historyManager = historyManager ?? ChatHistoryManager();
 
   @override
   void resetConversation() {
-    _history.clear();
-    _previousInteractionId = null;
+    historyManager.reset();
   }
 
   @override
   Future<Either<Failure, ChatMessageResponseModel>> sendMessage(
-      ChatMessageModel message,
-      ) async {
+    ChatMessageModel message,
+  ) async {
     try {
-      var input = message.input;
-      var prevId = _previousInteractionId;
+      final preparedMessage = historyManager.prepareMessage(message);
 
-      if (_history.length > _maxHistory) {
-        final last = _history.sublist(_history.length - _keepLast);
-        _history..clear()..addAll(last);
+      final result = await chatService.sendMessage(preparedMessage);
 
-        prevId = null;
-        input =
-        'Previous conversation:\n${last.join('\n')}\n\nUser: ${message.input}';
-      }
-
-      final result = await chatService.sendMessage(
-        ChatMessageModel(
-          model: message.model,
-          input: input,
-          previousInteractionId: prevId,
-          generationConfig: message.generationConfig,
-        ),
+      historyManager.addTurn(
+        userInput: message.input,
+        botOutput: result.outputText ?? '',
+        interactionId: result.id,
       );
-
-      _previousInteractionId = result.id;
-      _history
-        ..add('User: ${message.input}')
-        ..add('Bot: ${result.outputText ?? ''}');
 
       return Right(result);
     } on DioException catch (e) {
