@@ -82,6 +82,7 @@ class _ChatInputFieldState extends State<ChatInputField> {
                 ),
               ),
               child: TextField(
+                key:const Key('chat_input_field'),
                 controller: _textController,
                 style: const TextStyle(color: Colors.white, fontSize: 15),
                 maxLines: 4,
