@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:ai_chat_bot/features/chat_feature/presentation/views/chat_view.dart';
 
+import 'core/di/get_it_setup.dart';
+
 void main() {
   runApp(const AiChatBot());
+  getItSetup();
 }
 
 class AiChatBot extends StatelessWidget {
