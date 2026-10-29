@@ -6,6 +6,8 @@ class UiChatMessage {
   final MessageSender sender;
   final DateTime timestamp;
   final bool isLoading;
+  final bool isError;
+  final String? failedInput;
 
   UiChatMessage({
     required this.id,
@@ -13,6 +15,8 @@ class UiChatMessage {
     required this.sender,
     required this.timestamp,
     this.isLoading = false,
+    this.isError = false,
+    this.failedInput,
   });
 
   UiChatMessage copyWith({
@@ -21,6 +25,8 @@ class UiChatMessage {
     MessageSender? sender,
     DateTime? timestamp,
     bool? isLoading,
+    bool? isError,
+    String? failedInput,
   }) {
     return UiChatMessage(
       id: id ?? this.id,
@@ -28,6 +34,8 @@ class UiChatMessage {
       sender: sender ?? this.sender,
       timestamp: timestamp ?? this.timestamp,
       isLoading: isLoading ?? this.isLoading,
+      isError: isError ?? this.isError,
+      failedInput: failedInput ?? this.failedInput,
     );
   }
 }
