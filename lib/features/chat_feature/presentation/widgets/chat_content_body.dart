@@ -51,7 +51,7 @@ class _ChatContentBodyState extends State<ChatContentBody> {
           backgroundColor: const Color(0xFF1A1B23),
           appBar: ChatAppBar(
             onClearChat:
-            messages.isNotEmpty ? () => cubit.resetConversation() : null,
+                messages.isNotEmpty ? () => cubit.resetConversation() : null,
             onNewChat: () => cubit.resetConversation(),
           ),
           body: Column(
@@ -59,12 +59,13 @@ class _ChatContentBodyState extends State<ChatContentBody> {
               Expanded(
                 child: messages.isEmpty
                     ? ChatEmptyState(
-                  onSuggestionSelected: (text) => cubit.sendMessage(text),
-                )
+                        onSuggestionSelected: (text) => cubit.sendMessage(text),
+                      )
                     : ChatMessageList(
-                  messages: messages,
-                  scrollController: _scrollController,
-                ),
+                        messages: messages,
+                        scrollController: _scrollController,
+                        onRetryMessage: (msg) => cubit.retryMessage(msg),
+                      ),
               ),
               ChatInputField(
                 onSubmitted: (text) => cubit.sendMessage(text),

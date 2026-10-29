@@ -5,11 +5,13 @@ import 'package:ai_chat_bot/features/chat_feature/presentation/widgets/chat_mess
 class ChatMessageList extends StatelessWidget {
   final List<UiChatMessage> messages;
   final ScrollController scrollController;
+  final ValueChanged<UiChatMessage>? onRetryMessage;
 
   const ChatMessageList({
     super.key,
     required this.messages,
     required this.scrollController,
+    this.onRetryMessage,
   });
 
   @override
@@ -23,6 +25,7 @@ class ChatMessageList extends StatelessWidget {
         return ChatMessageBubble(
           key: ValueKey(message.id),
           message: message,
+          onRetry: onRetryMessage != null ? () => onRetryMessage!(message) : null,
         );
       },
     );

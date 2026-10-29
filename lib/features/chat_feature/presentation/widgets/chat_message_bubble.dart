@@ -1,21 +1,29 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
 import 'package:ai_chat_bot/features/chat_feature/domain/entities/ui_chat_message.dart';
 import 'package:ai_chat_bot/features/chat_feature/presentation/widgets/chat_typing_indicator.dart';
-import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
+
+import 'failure_bubble.dart';
 
 class ChatMessageBubble extends StatelessWidget {
   final UiChatMessage message;
+  final VoidCallback? onRetry;
 
   const ChatMessageBubble({
     super.key,
     required this.message,
+    this.onRetry,
   });
 
   bool get isUser => message.sender == MessageSender.user;
 
   @override
   Widget build(BuildContext context) {
+    if (message.isError) {
+      return FailureBubble(message: message, formatTime: _formatTime,onRetry: onRetry,);
+    }
+
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
       child: Row(
@@ -25,6 +33,7 @@ class ChatMessageBubble extends StatelessWidget {
         children: [
           if (!isUser) ...[
             Container(
+              key: const ValueKey('AI Response'),
               padding: const EdgeInsets.all(8),
               decoration: const BoxDecoration(
                 color: Color(0xFF10A37F),
@@ -75,27 +84,34 @@ class ChatMessageBubble extends StatelessWidget {
                           child: ChatTypingIndicator(),
                         )
                       : MarkdownBody(
-                        data: message.text,
-                    styleSheet: MarkdownStyleSheet.fromTheme(Theme.of(context)).copyWith(
-                      p:  TextStyle(
-                        color: isUser ? Colors.white : const Color(0xFFECECF1),
-                        fontSize: 15,
-                        height: 1.4,
-                      ),
-                      strong: TextStyle(
-                        color: isUser ? Colors.white : const Color(0xFFECECF1),
-                        fontSize: 15,
-                        fontWeight: FontWeight.bold,
-                        height: 1.4,
-                      ),
-                      listBullet:  TextStyle(
-                        color: isUser ? Colors.white : const Color(0xFFECECF1),
-                        fontSize: 15,
-                        height: 1.4,
-                      ),
-                    ),
-
-                      ),
+                          data: message.text,
+                          styleSheet:
+                              MarkdownStyleSheet.fromTheme(Theme.of(context))
+                                  .copyWith(
+                            p: TextStyle(
+                              color: isUser
+                                  ? Colors.white
+                                  : const Color(0xFFECECF1),
+                              fontSize: 15,
+                              height: 1.4,
+                            ),
+                            strong: TextStyle(
+                              color: isUser
+                                  ? Colors.white
+                                  : const Color(0xFFECECF1),
+                              fontSize: 15,
+                              fontWeight: FontWeight.bold,
+                              height: 1.4,
+                            ),
+                            listBullet: TextStyle(
+                              color: isUser
+                                  ? Colors.white
+                                  : const Color(0xFFECECF1),
+                              fontSize: 15,
+                              height: 1.4,
+                            ),
+                          ),
+                        ),
                 ),
                 if (!message.isLoading) ...[
                   const SizedBox(height: 4),
@@ -140,6 +156,7 @@ class ChatMessageBubble extends StatelessWidget {
           if (isUser) ...[
             const SizedBox(width: 10),
             Container(
+              key: const ValueKey('User Input'),
               padding: const EdgeInsets.all(8),
               decoration: const BoxDecoration(
                 color: Color(0xFF3E3F4C),
