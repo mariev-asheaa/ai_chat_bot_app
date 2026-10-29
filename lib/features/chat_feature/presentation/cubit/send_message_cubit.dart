@@ -54,6 +54,8 @@ class SendMessageCubit extends Cubit<SendMessageState> {
           _messages[index] = _messages[index].copyWith(
             text: 'Error: ${failure.errMessage}',
             isLoading: false,
+            isError: true,
+            failedInput: trimmedText,
           );
         }
         emit(SendMessageError(message: failure.errMessage));
@@ -66,13 +68,20 @@ class SendMessageCubit extends Cubit<SendMessageState> {
           _messages[index] = _messages[index].copyWith(
             text: responseText,
             isLoading: false,
+            isError: false,
           );
         }
         emit(SendMessageSuccess(response: response));
       },
     );
   }
-
+  Future<void> retryMessage(UiChatMessage errorMessage) async {
+    final inputToRetry = errorMessage.failedInput;
+    if (inputToRetry != null && inputToRetry.isNotEmpty) {
+      _messages.removeWhere((m) => m.id == errorMessage.id);
+      await sendMessage(inputToRetry);
+    }
+  }
   void resetConversation() {
     _messages.clear();
     repository.resetConversation();
