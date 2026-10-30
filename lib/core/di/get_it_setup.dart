@@ -8,10 +8,10 @@ import '../services/chat_service.dart';
 
 var getIt=GetIt.instance;
 void getItSetup(){
-  getIt.registerSingleton<ChatService>(ChatService());
+  getIt.registerLazySingleton<ChatService>(()=>ChatService(apiClient: getIt<ApiClient>()));
   getIt.registerSingleton<ApiClient>(ApiClient());
 
-  getIt.registerSingleton<SendMessageRepository>(SendMessageRepositoryImpl(chatService: getIt<ChatService>()));
+  getIt.registerLazySingleton<SendMessageRepository>(()=>SendMessageRepositoryImpl(chatService: getIt<ChatService>()));
   getIt.registerFactory<SendMessageCubit>(()=>SendMessageCubit(repository: getIt<SendMessageRepository>()));
 
 }
